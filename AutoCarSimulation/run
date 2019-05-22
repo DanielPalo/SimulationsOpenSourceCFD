@@ -1,0 +1,81 @@
+#!/bin/sh
+./.preamble
+################# INPUT #####################################################################################
+
+## PLEASE PUT your path of Salome Installation (is the path where you have the salome script)
+## and core used for this simulation
+
+export salomePath='/opt/SALOME/salome'
+Ncores=4
+
+
+
+export path=$(pwd)
+alias salome='python3 $HOME$salomePath'
+################# FROM CAD TO STL ##########################################################################
+
+salome -t pre.py
+cat STL/*.stl > constant/triSurface/macchina.stl
+
+####################### FROM STL TO MESH WITH SNAPPY #######################################################
+echo
+echo --------------------------------------- MESHING PROCEDURE ------------------------------------------
+echo
+
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+runApplication surfaceFeatures
+runApplication blockMesh
+
+
+# Pay attention decomposition hiercal more accurate for snappy process
+
+runApplication decomposePar
+runParallel snappyHexMesh 
+
+cp system/meshQualityDict.layers system/meshQualityDict 
+cp system/snappyHexMeshDict.layers system/snappyHexMeshDict
+
+mpirun -np $Ncores snappyHexMesh -parallel > layers 2>&1 
+
+runApplication reconstructParMesh 
+
+cp -r 3/polyMesh constant/.
+rm -r processor* 1 2 3
+
+cp system/meshQualityDict.12    system/meshQualityDict
+cp system/snappyHexMeshDict.12 	system/snappyHexMeshDict
+
+######################## SIMULATION ##################################################
+echo
+echo ----------------------------------- SIMUULATION BEGINS ----------------------------------------------
+echo
+
+cp system/decomposeParDict.solve system/decomposeParDict 
+
+rm log.decomposePar
+
+runApplication decomposePar  
+
+runParallel potentialFoam 
+
+mpirun -np $Ncores renumberMesh -overwrite -parallel
+echo
+echo SimpleFoam simulation, please wait about 10 
+mpirun -np $Ncores simpleFoam -parallel > log.simpleFoam 2>&1  
+
+echo ------------------------------------- SIMULATION END ------------------------------------------------
+
+runApplication reconstructPar -latestTime
+touch simulation.foam
+###################### STUFF #########################################################
+
+cp system/decomposeParDict.mesh system/decomposeParDict
+cp system/meshQualityDict.12    system/meshQualityDict
+cp system/snappyHexMeshDict.12 	system/snappyHexMeshDict
+
+############################ POSTPROCESSING ######################################àà
+
+# comingSoon IT'S REQUESTED TO COMPILE PYTHON FOR PARAVIEW 
+
+./.textout
