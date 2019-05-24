@@ -11,7 +11,7 @@ Ncores=4
 
 
 export path=$(pwd)
-alias salome='python3 $HOME$salomePath'
+alias salome='python3 $salomePath'
 ################# FROM CAD TO STL ##########################################################################
 
 salome -t pre.py
