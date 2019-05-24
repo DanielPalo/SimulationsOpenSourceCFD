@@ -1,0 +1,14 @@
+This tutorial performs a steadyState incompressible simulation for an aerodynamic carshape
+The aim of this tutorial is to show an automatic simulation starting from a CAD (step file) to a complete CFD.
+The preProcessing of SALOME CAE is written in python3 the rest of code in bash language.
+Software Requested: 
+0) python3 
+1) Salome CAE 9.2.1
+2) openFOAM-6 
+3) paraView with python compiled (coming soon)
+
+The stl are generated with SALOME and mesh with SnappyHexMesh the simulation with SimpleFOAM
+
+Author: 
+CFD Supervisor 
+Daniel Angel Palomino Solis
